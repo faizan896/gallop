@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>gallop — investment terminal</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ebeae7'/%3E%3Cpolyline points='4 20 11 11 16 16 28 5' stroke='%231b1a18' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://api.coingecko.com" crossorigin>
+  <link rel="preconnect" href="https://finnhub.io" crossorigin>
+  <link rel="dns-prefetch" href="https://eth.llamarpc.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"IBM Plex Mono"', 'monospace'], display: ['"IBM Plex Mono"', 'monospace'] },
+          colors: {
+            /* light "surface" scale (keys kept so existing classes still work) */
+            dark: { 950: '#ebeae7', 900: '#e7e5e1', 800: '#e6e4df', 700: '#ded9d1', 600: '#d6d2cb', 500: '#cbc7bf', 400: '#a9a59d', 300: '#8c8881' },
+            /* "light" = primary ink text */
+            light: { 100: '#1b1a18', 200: '#2d2a26', 300: '#403c37' },
+            gray: { muted: '#6f6c66', dim: '#8c8881', darker: '#a8a49c' },
+            /* monochrome ink accent */
+            accent: { DEFAULT: '#1b1a18', light: '#1b1a18', dark: '#000000' },
+            status: { green: '#4f9d6b', red: '#b6635c', blue: '#3a4a78', purple: '#6f7d6a', gold: '#9c7a52' }
+          },
+          boxShadow: { 'glass': '0 1px 0 rgba(0,0,0,0.03)', 'glow': '0 0 0 rgba(0,0,0,0)' }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-dark-950 text-light-100 font-sans text-[13px] antialiased selection:bg-light-100 selection:text-dark-950 min-h-screen">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="glass-header sticky top-0 z-30 h-14 px-5 sm:px-8 flex items-center justify-between border-b border-dark-500">
+    <div class="flex items-center gap-4 min-w-0">
+      <span class="text-[14px] font-medium tracking-tight text-light-100">gallop</span>
+      <span class="hidden sm:flex items-center gap-2 pl-4 border-l border-dark-500">
+        <span id="market-status-dot" class="w-1.5 h-1.5 rounded-full bg-status-red"></span>
+        <span id="market-status-text" class="text-[10px] lowercase tracking-wide text-gray-dim">markets closed</span>
+        <span class="text-[10px] text-gray-darker ml-1">· sync <span id="last-sync-text">--:--</span></span>
+      </span>
+    </div>
+
+    <nav class="flex items-center gap-5 sm:gap-7">
+      <button data-target="overview" class="nav-btn text-[12px] lowercase tracking-wide text-light-100 transition-colors">overview</button>
+      <button data-target="portfolio" class="nav-btn text-[12px] lowercase tracking-wide text-gray-dim hover:text-light-100 transition-colors">portfolio</button>
+      <button data-target="markets" class="nav-btn text-[12px] lowercase tracking-wide text-gray-dim hover:text-light-100 transition-colors">markets</button>
+      <button data-target="research" class="nav-btn text-[12px] lowercase tracking-wide text-gray-dim hover:text-light-100 transition-colors">research</button>
+    </nav>
+
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex flex-col items-end leading-none mr-1">
+        <span id="greeting-text" class="text-[11px] text-light-100"></span>
+        <span id="current-date" class="text-[9px] text-gray-dim mt-1 lowercase tracking-wide"></span>
+      </div>
+      <button id="export-data-btn" class="text-[10px] lowercase tracking-wide text-gray-dim hover:text-light-100 border border-dark-500 hover:border-light-100 px-2 py-1 rounded transition-colors">export</button>
+      <button id="import-data-btn" class="text-[10px] lowercase tracking-wide text-gray-dim hover:text-light-100 border border-dark-500 hover:border-light-100 px-2 py-1 rounded transition-colors">import</button>
+      <input type="file" id="import-file-input" accept=".json,application/json" class="hidden">
+      <button id="user-avatar" title="Set your name" class="w-7 h-7 rounded-full border border-dark-500 text-[10px] font-medium text-light-100 hover:border-light-100 transition-colors">IN</button>
+    </div>
+  </header>
+
+  <main class="px-5 sm:px-8 py-8 max-w-[1500px] mx-auto">
+
+    <!-- ==================== OVERVIEW ==================== -->
+    <div id="page-overview" class="page-section fade-in">
+
+      <!-- hero: three columns -->
+      <div class="grid grid-cols-1 lg:grid-cols-[0.9fr_1.5fr_0.95fr] gap-8 lg:gap-0">
+
+        <!-- LEFT -->
+        <section class="lg:pr-8">
+          <div class="tag mb-3">portfolio.overview</div>
+          <div class="grad-a grain relative rounded-[4px] overflow-hidden h-[300px] flex items-end">
+            <div class="relative z-10 p-5">
+              <div class="font-display text-[34px] font-medium text-white leading-none tracking-tight" id="nw-display">$0</div>
+              <div class="text-[11px] text-white/70 mt-2 lowercase tracking-wide">total net worth · cash + investments</div>
+            </div>
+          </div>
+
+          <div class="tag mt-7 mb-3">active.yield</div>
+          <div class="grad-b grain relative rounded-[4px] overflow-hidden h-[132px] flex items-end">
+            <div class="relative z-10 p-5">
+              <div class="font-display text-[22px] font-medium text-white leading-none" id="ti-display">$0</div>
+              <div class="text-[10px] text-white/70 mt-1.5 lowercase tracking-wide" id="ti-sub">stocks · crypto · rwa</div>
+            </div>
+          </div>
+
+          <!-- cash on hand -->
+          <div class="mt-6 pt-4 border-t border-dark-500">
+            <div class="tag mb-2">cash.on.hand</div>
+            <div id="coh-display-container" class="flex items-center justify-between">
+              <div class="font-display text-[20px] font-medium text-light-100" id="coh-display">$0</div>
+              <button id="coh-edit-btn" class="text-[10px] lowercase tracking-wide text-gray-dim hover:text-light-100 border border-dark-500 hover:border-light-100 px-2 py-1 rounded transition-colors">edit</button>
+            </div>
+            <div id="coh-edit-container" class="hidden mt-2">
+              <div class="relative flex items-center mb-2">
+                <span class="absolute left-2 text-gray-dim text-sm">$</span>
+                <input type="number" id="coh-input" class="w-full bg-dark-900 border border-light-100 rounded px-2 py-1 pl-6 text-sm text-light-100 outline-none">
+              </div>
+              <div class="flex gap-2">
+                <button id="coh-save" class="flex-1 text-[10px] lowercase bg-accent text-white py-1 rounded hover:bg-accent-dark transition-colors">save</button>
+                <button id="coh-cancel" class="flex-1 text-[10px] lowercase bg-dark-700 border border-dark-500 text-light-100 py-1 rounded hover:bg-dark-600 transition-colors">cancel</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CENTER -->
+        <section class="vrule lg:px-8 mt-8 lg:mt-0">
+          <div class="flex items-start justify-between mb-3">
+            <div class="tag">market.trajectory</div>
+            <div class="flex items-center gap-3">
+              <div class="font-display text-[15px] text-light-100" id="chart-total-display">$0</div>
+              <div class="flex border border-dark-500 rounded overflow-hidden">
+                <button class="px-2.5 py-1 text-[10px] lowercase bg-accent/10 text-accent-light font-medium transition-colors" data-overview="networth">net worth</button>
+                <button class="px-2.5 py-1 text-[10px] lowercase text-gray-dim hover:text-light-100 transition-colors" data-overview="returns">returns</button>
+              </div>
+            </div>
+          </div>
+          <div class="flex">
+            <div class="text-[9px] lowercase tracking-widest text-gray-dim self-center" style="writing-mode:vertical-rl;transform:rotate(180deg)">valuation</div>
+            <div class="flex-1 h-[340px] sm:h-[400px] relative pl-3">
+              <canvas id="overview-chart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT -->
+        <section class="vrule lg:pl-8 mt-8 lg:mt-0">
+          <div class="flex items-center justify-between mb-3">
+            <div class="tag">watchlist.monitored</div>
+            <div class="tag">find.assets</div>
+          </div>
+          <input type="text" id="header-search-input" placeholder="search ticker or index" class="w-full bg-transparent border-b border-dark-500 focus:border-light-100 py-2 text-[12px] text-light-100 placeholder-gray-darker outline-none lowercase transition-colors mb-3">
+
+          <div>
+            <div class="wl-row">
+              <span class="wl-tk">btc.usd</span>
+              <span class="wl-val skeleton-text" id="widget-price-btc">--</span>
+              <span class="wl-chg text-gray-dim" id="widget-change-btc">--</span>
+            </div>
+            <div class="wl-row">
+              <span class="wl-tk">nvda</span>
+              <span class="wl-val skeleton-text" id="widget-price-nvda">--</span>
+              <span class="wl-chg text-gray-dim" id="widget-change-nvda">--</span>
+            </div>
+            <div class="wl-row">
+              <span class="wl-tk">spx.index</span>
+              <span class="wl-val skeleton-text" id="widget-price-spx">--</span>
+              <span class="wl-chg text-gray-dim" id="widget-change-spx">--</span>
+            </div>
+            <div class="wl-row">
+              <span class="wl-tk">gold.spot</span>
+              <span class="wl-val skeleton-text" id="widget-price-gold">--</span>
+              <span class="wl-chg text-gray-dim" id="widget-change-gold">--</span>
+            </div>
+          </div>
+
+          <button data-target="portfolio" class="nav-btn mt-6 w-full text-[11px] lowercase tracking-wide text-light-100 border border-dark-400 hover:border-light-100 hover:bg-dark-700 py-2.5 rounded transition-colors">add instrument</button>
+        </section>
+      </div>
+
+      <!-- second row: allocation + holdings -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0 mt-12 pt-10 border-t border-dark-500">
+        <section class="lg:pr-8">
+          <div class="tag mb-5">allocation.weights</div>
+          <div class="flex items-center gap-8">
+            <div class="h-[150px] w-[150px] flex-shrink-0 relative">
+              <canvas id="allocation-chart"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span class="text-[9px] text-gray-dim lowercase tracking-wide">total</span>
+                <span class="text-[14px] text-light-100">100%</span>
+              </div>
+            </div>
+            <div class="flex-1 grid gap-3" id="allocation-legend"></div>
+          </div>
+        </section>
+        <section class="vrule lg:pl-8 mt-8 lg:mt-0">
+          <div class="tag mb-5">holdings.ranked</div>
+          <div id="top-holdings-list">
+            <p class="text-[11px] text-gray-darker">no holdings yet. add some on the portfolio page.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== PORTFOLIO ==================== -->
+    <div id="page-portfolio" class="page-section hidden fade-in">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Crypto -->
+        <section>
+          <div class="flex justify-between items-center mb-5">
+            <div class="tag">crypto.holdings</div>
+            <button id="add-crypto-btn" class="text-[10px] lowercase border border-dark-400 text-light-100 hover:bg-dark-700 px-2.5 py-1 rounded transition-colors">+ add</button>
+          </div>
+          <div id="add-crypto-form" class="hidden mb-6 bg-dark-800 p-4 rounded border border-dark-500">
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <input type="text" name="coin-id" placeholder="coingecko id (e.g. bitcoin)" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+              <input type="text" name="coin-ticker" placeholder="ticker (e.g. btc)" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none uppercase text-light-100 placeholder-gray-darker">
+              <input type="text" name="coin-name" placeholder="name (optional)" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+              <input type="number" name="coin-qty" placeholder="qty held (optional)" min="0" step="any" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+              <input type="number" name="coin-buy" placeholder="avg buy price $ (optional)" min="0" step="any" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+            </div>
+            <div class="flex justify-end gap-2">
+              <button class="cancel-btn text-[10px] lowercase text-gray-dim hover:text-light-100 px-3 py-1">cancel</button>
+              <button class="btn-primary text-[10px] lowercase bg-accent text-white px-4 py-1 rounded hover:bg-accent-dark transition-colors">save entry</button>
+            </div>
+          </div>
+          <div class="space-y-1" id="crypto-list"></div>
+        </section>
+
+        <!-- Stock -->
+        <section class="vrule lg:pl-8">
+          <div class="flex justify-between items-center mb-5">
+            <div class="tag">stock.holdings</div>
+            <button id="add-stock-btn" class="text-[10px] lowercase border border-dark-400 text-light-100 hover:bg-dark-700 px-2.5 py-1 rounded transition-colors">+ add</button>
+          </div>
+          <div id="add-stock-form" class="hidden mb-6 bg-dark-800 p-4 rounded border border-dark-500">
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <input type="text" name="stock-symbol" placeholder="ticker (e.g. aapl)" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none uppercase text-light-100 placeholder-gray-darker">
+              <input type="text" name="stock-name" placeholder="name (optional)" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+              <input type="number" name="stock-qty" placeholder="shares (optional)" min="0" step="any" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+              <input type="number" name="stock-buy" placeholder="avg buy price $ (optional)" min="0" step="any" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+            </div>
+            <div class="flex justify-end gap-2">
+              <button class="cancel-btn text-[10px] lowercase text-gray-dim hover:text-light-100 px-3 py-1">cancel</button>
+              <button class="btn-primary text-[10px] lowercase bg-accent text-white px-4 py-1 rounded hover:bg-accent-dark transition-colors">save entry</button>
+            </div>
+          </div>
+          <div class="space-y-1" id="stock-list"></div>
+        </section>
+      </div>
+
+      <!-- Ondo -->
+      <section class="mt-12 pt-10 border-t border-dark-500">
+        <div class="flex justify-between items-center mb-5">
+          <div class="flex items-center gap-3">
+            <div class="tag">ondo.global.markets</div>
+            <span class="px-1.5 py-0.5 rounded bg-dark-700 text-gray-muted border border-dark-500 text-[9px] uppercase tracking-wider">rwa</span>
+          </div>
+          <div class="flex gap-2">
+            <button id="ondo-wallet-toggle-btn" class="text-[10px] lowercase border border-dark-400 text-light-100 hover:bg-dark-700 px-2.5 py-1 rounded transition-colors">wallet</button>
+            <button id="add-ondo-btn" class="text-[10px] lowercase border border-dark-400 text-light-100 hover:bg-dark-700 px-2.5 py-1 rounded transition-colors">+ add</button>
+          </div>
+        </div>
+
+        <div id="ondo-wallet-panel" class="hidden mb-6 bg-dark-800 border border-dark-500 rounded p-4">
+          <label class="block text-[10px] text-gray-dim lowercase tracking-wide mb-2">ethereum address</label>
+          <div class="flex gap-3">
+            <input type="text" id="ondo-wallet-input" placeholder="0x..." class="flex-1 bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-3 py-2 text-xs outline-none text-light-100 placeholder-gray-darker" spellcheck="false" autocomplete="off">
+            <button id="ondo-wallet-scan-btn" class="bg-accent text-white px-4 py-2 rounded text-xs lowercase hover:bg-accent-dark transition-colors">scan</button>
+            <button id="ondo-wallet-clear-btn" class="bg-dark-700 border border-dark-500 text-light-100 px-4 py-2 rounded text-xs lowercase hover:bg-dark-600 transition-colors" style="display:none;">clear</button>
+          </div>
+          <div id="ondo-wallet-status" class="text-[11px] mt-2"></div>
+          <div id="ondo-wallet-holdings" class="mt-3 space-y-1"></div>
+        </div>
+
+        <div id="add-ondo-form" class="hidden mb-6 bg-dark-800 p-4 rounded border border-dark-500">
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <input type="text" name="ondo-symbol" placeholder="symbol (e.g. aaplon)" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+            <input type="text" name="ondo-name" placeholder="name (optional)" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+            <input type="number" name="ondo-qty" placeholder="tokens (optional)" min="0" step="any" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+            <input type="number" name="ondo-buy" placeholder="avg buy price $ (optional)" min="0" step="any" class="bg-dark-900 border border-dark-500 focus:border-light-100 rounded px-2 py-1.5 text-xs outline-none text-light-100 placeholder-gray-darker">
+          </div>
+          <div class="flex justify-end gap-2">
+            <button class="cancel-btn text-[10px] lowercase text-gray-dim hover:text-light-100 px-3 py-1">cancel</button>
+            <button class="btn-primary text-[10px] lowercase bg-accent text-white px-4 py-1 rounded hover:bg-accent-dark transition-colors">save entry</button>
+          </div>
+        </div>
+
+        <div class="space-y-1" id="ondo-list"></div>
+      </section>
+    </div>
+
+    <!-- ==================== MARKETS ==================== -->
+    <div id="page-markets" class="page-section hidden fade-in">
+      <div class="mb-8">
+        <div class="tag">markets.live</div>
+        <p class="text-[11px] text-gray-dim mt-2 lowercase">real-time prices · <span class="text-status-green">updated every 60s</span></p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-px bg-dark-500 border border-dark-500 rounded overflow-hidden">
+        <div id="mk-btc" class="bg-dark-950 p-8 flex flex-col justify-center">
+          <div class="text-[11px] lowercase tracking-wide text-gray-dim mb-3">bitcoin · btc</div>
+          <div class="font-display text-[40px] sm:text-[48px] font-medium text-light-100 tracking-tight price-val skeleton-text">--</div>
+          <div class="text-[14px] mt-2 font-medium change-val text-gray-dim">--</div>
+        </div>
+        <div id="mk-nvda" class="bg-dark-950 p-8 flex flex-col justify-center">
+          <div class="text-[11px] lowercase tracking-wide text-gray-dim mb-3">nvidia · nvda</div>
+          <div class="font-display text-[40px] sm:text-[48px] font-medium text-light-100 tracking-tight price-val skeleton-text">--</div>
+          <div class="text-[14px] mt-2 font-medium change-val text-gray-dim">--</div>
+        </div>
+        <div id="mk-spx" class="bg-dark-950 p-8 flex flex-col justify-center">
+          <div class="text-[11px] lowercase tracking-wide text-gray-dim mb-3">s&amp;p 500 · spx</div>
+          <div class="font-display text-[40px] sm:text-[48px] font-medium text-light-100 tracking-tight price-val skeleton-text">--</div>
+          <div class="text-[14px] mt-2 font-medium change-val text-gray-dim">--</div>
+        </div>
+        <div id="mk-gold" class="bg-dark-950 p-8 flex flex-col justify-center">
+          <div class="text-[11px] lowercase tracking-wide text-gray-dim mb-3">gold · xau</div>
+          <div class="font-display text-[40px] sm:text-[48px] font-medium text-light-100 tracking-tight price-val skeleton-text">--</div>
+          <div class="text-[14px] mt-2 font-medium change-val text-gray-dim">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== RESEARCH ==================== -->
+    <div id="page-research" class="page-section hidden fade-in max-w-5xl mx-auto w-full">
+      <div class="tag mb-4">research.terminal</div>
+      <div class="border border-dark-500 focus-within:border-light-100 rounded p-5 transition-colors mb-4">
+        <div class="flex gap-4">
+          <input type="text" id="research-search-input" placeholder="enter ticker (e.g. aapl)" class="flex-1 bg-transparent text-xl lowercase tracking-wide text-light-100 placeholder-gray-darker outline-none">
+          <button id="research-search-btn" class="bg-accent text-white px-8 py-2.5 rounded text-[12px] lowercase tracking-wide hover:bg-accent-dark transition-colors">search</button>
+        </div>
+      </div>
+      <div id="research-loading" class="hidden text-center py-12">
+        <div class="w-8 h-8 border-2 border-dark-500 border-t-light-100 rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-sm text-gray-dim lowercase tracking-wide">fetching stock data...</p>
+      </div>
+      <div id="research-error" class="hidden border-l-2 border-l-status-red bg-dark-800 p-4 rounded">
+        <p class="text-status-red text-sm"></p>
+      </div>
+      <div id="research-results"></div>
+    </div>
+
+  </main>
+
+  <script src="prices.js" defer></script>
+  <script src="portfolio.js" defer></script>
+  <script src="overview.js" defer></script>
+  <script src="research.js" defer></script>
+  <script src="dashboard.js" defer></script>
+</body>
+</html>
