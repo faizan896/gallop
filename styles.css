@@ -1,0 +1,174 @@
+/* Custom styles for GALLOP Dashboard — Warm Dark + Emerald */
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+.glass-panel {
+  background: #232128;
+  border: 1px solid #322f39;
+  transition: border-color 0.2s ease;
+}
+
+.glass-header {
+  background: rgba(26,25,30,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Research section tables */
+.research-section {
+  background: #232128;
+  border: 1px solid #322f39;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.research-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #c98b8b;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #322f39;
+}
+
+.research-table { width: 100%; border-collapse: collapse; }
+.research-table tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.research-table tr:last-child { border-bottom: none; }
+.research-table td { padding: 10px 0; font-size: 13px; }
+.research-label { color: #a8a29e; }
+.research-value { text-align: right; color: #fafaf9; font-weight: 500; }
+.val-positive { color: #6fbf93 !important; }
+.val-negative { color: #d98484 !important; }
+
+.research-header {
+  background: #232128;
+  border: 1px solid #322f39;
+  border-top: 1px solid #c98b8b;
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.research-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, rgba(201,139,139,0.06), transparent);
+  pointer-events: none;
+}
+
+.research-header-left { position: relative; z-index: 1; }
+.research-header-right { text-align: right; position: relative; z-index: 1; }
+
+.research-ticker {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 58px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: #f1efeb;
+  line-height: 1;
+}
+
+.research-name {
+  display: block;
+  font-size: 18px;
+  color: #a8a29e;
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+}
+
+.research-sector {
+  display: block;
+  font-size: 11px;
+  color: #78716c;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.research-price {
+  display: block;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 38px;
+  font-weight: 500;
+  color: #f1efeb;
+}
+
+.research-change {
+  display: block;
+  font-size: 18px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.research-change.positive { color: #6fbf93; }
+.research-change.negative { color: #d98484; }
+
+/* Wallet status */
+.wallet-status.scanning { color: #c2a878; }
+.wallet-status.success { color: #6fbf93; }
+.wallet-status.error { color: #d98484; }
+
+/* Form field error */
+.form-field-error { border-color: #ef4444 !important; }
+
+/* ---- Loading skeletons ---- */
+/* Applied to price placeholders while data is still loading; JS removes the
+   class once a real value arrives. */
+.skeleton-text {
+  color: transparent !important;
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.05) 63%);
+  background-size: 400% 100%;
+  border-radius: 6px;
+  display: inline-block;
+  min-width: 56px;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* ---- Mobile sidebar open state ---- */
+#sidebar.is-open { transform: translateX(0); }
+#sidebar-backdrop.is-open { opacity: 1; pointer-events: auto; }
+
+/* Lock background scroll while the mobile drawer is open */
+body.sidebar-open { overflow: hidden; }
+
+/* ---- Accessibility: respect reduced-motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
