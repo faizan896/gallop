@@ -3,6 +3,7 @@
 
   var REFRESH_INTERVAL = 60000;
   var FINNHUB_KEY = 'd6or3l1r01qmqugc2a80d6or3l1r01qmqugc2a8g';
+  var PYTH_SPY = '19e09bb805456ada3979a7d1cbb4b6d63babc3a0f8e8a9509f68afa5c4c11cd5'; // Pyth SPY feed
   var KEYS = ['btc', 'nvda', 'spx', 'gold'];
 
   function fmtPrice(n, decimals) {
@@ -85,7 +86,7 @@
     } catch (e) { console.warn('BTC/Gold fetch failed:', e.message); }
   }
 
-  // --- Finnhub quote (used for NVDA + SPY proxy) ---
+  // --- Finnhub quote (used for NVDA) ---
   async function fetchFinnhubQuote(symbol) {
     var data = await fetchJsonRetry('https://finnhub.io/api/v1/quote?symbol=' + encodeURIComponent(symbol) + '&token=' + FINNHUB_KEY);
     if (!data || data.c === 0 || data.c == null) throw new Error('No data for ' + symbol);
@@ -101,10 +102,16 @@
 
   async function fetchSPX() {
     try {
-      // Finnhub free tier has no S&P 500 index, so SPY (~1/10th of the index) × 10 approximates it.
-      var q = await fetchFinnhubQuote('SPY');
-      setWidget('spx', q.price * 10, q.changePct, 2);
-    } catch (e) { console.warn('SPX fetch failed:', e.message); }
+      // S&P 500 via Pyth oracle — SPY ETF feed × 10 ≈ index. Free, no key, real-time, client-side.
+      var d = await fetchJsonRetry('https://hermes.pyth.network/v2/updates/price/latest?ids[]=' + PYTH_SPY);
+      var pr = d && d.parsed && d.parsed[0] && d.parsed[0].price;
+      if (!pr) throw new Error('no pyth data');
+      var spx = Number(pr.price) * Math.pow(10, pr.expo) * 10;
+      // Pyth's latest feed has no 24h %, so take the change figure from Finnhub's SPY quote.
+      var pct = null;
+      try { var q = await fetchFinnhubQuote('SPY'); pct = q.changePct; } catch (e) { /* price still shows */ }
+      setWidget('spx', spx, pct, 2);
+    } catch (e) { console.warn('SPX (Pyth) fetch failed:', e.message); }
   }
 
   // Show last-known prices instantly (before fresh data lands), so nothing is blank on load.

@@ -160,8 +160,7 @@
   }
   async function fetchOneStockLogo(symbol) {
     try {
-      var url = 'https://finnhub.io/api/v1/stock/profile2?symbol=' + encodeURIComponent(symbol) + '&token=' + FINNHUB_KEY;
-      var res = await fetch(url);
+      var res = await fetch('https://finnhub.io/api/v1/stock/profile2?symbol=' + encodeURIComponent(symbol) + '&token=' + FINNHUB_KEY);
       if (!res.ok) throw new Error('profile ' + res.status);
       var data = await res.json();
       stockLogos[symbol] = (data && data.logo) ? data.logo : '';
@@ -169,8 +168,7 @@
   }
   async function fetchOneStock(symbol) {
     try {
-      var url = 'https://finnhub.io/api/v1/quote?symbol=' + encodeURIComponent(symbol) + '&token=' + FINNHUB_KEY;
-      var res = await fetch(url);
+      var res = await fetch('https://finnhub.io/api/v1/quote?symbol=' + encodeURIComponent(symbol) + '&token=' + FINNHUB_KEY);
       if (!res.ok) throw new Error('Finnhub ' + res.status);
       var data = await res.json();
       if (!data || data.c === 0 || data.c == null) return;
