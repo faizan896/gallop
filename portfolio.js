@@ -30,7 +30,7 @@
   function toast(msg) {
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1b1a18;color:#f1efeb;font:400 12px "IBM Plex Mono",monospace;padding:10px 16px;border-radius:6px;z-index:300;box-shadow:0 6px 22px rgba(0,0,0,.25);max-width:90vw;text-align:center';
+    t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgb(var(--c-accent));color:rgb(var(--c-dark-950));font:400 12px "IBM Plex Mono",monospace;padding:10px 16px;border-radius:6px;z-index:300;box-shadow:0 6px 22px rgba(0,0,0,.25);max-width:90vw;text-align:center';
     document.body.appendChild(t);
     setTimeout(function () { t.style.transition = 'opacity .4s'; t.style.opacity = '0'; setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 400); }, 3000);
   }
@@ -254,7 +254,7 @@
       var qtyLabel = h.qty > 0 ? h.qty + ' shares' : '';
       if (h.qty > 0 && h.buy > 0) qtyLabel += ' @ ' + fmtPrice(h.buy, 2);
       var char = h.symbol.charAt(0);
-      var stFallback = '<div class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold">' + escHtml(char) + '</div>';
+      var stFallback = '<div class="w-7 h-7 rounded-full bg-accent text-dark-950 flex items-center justify-center text-[10px] font-bold">' + escHtml(char) + '</div>';
       var stLogo = stockLogos[h.symbol];
       var stLogoHtml = stLogo
         ? '<img src="' + escAttr(stLogo) + '" alt="' + escAttr(h.symbol) + '" class="w-7 h-7 rounded-full bg-white object-contain" onerror="this.outerHTML=this.getAttribute(\'data-fallback\')" data-fallback="' + escAttr(stFallback) + '">'

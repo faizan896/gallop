@@ -282,6 +282,25 @@
     navBtns.forEach(function (b) { b.addEventListener('click', closeNav); });
   }
 
+  // --- Dark / light theme toggle ---
+  function setupThemeToggle() {
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        try { localStorage.setItem('mm_theme', 'light'); } catch (e) { /* ignore */ }
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        try { localStorage.setItem('mm_theme', 'dark'); } catch (e) { /* ignore */ }
+      }
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', isDark ? '#ebeae7' : '#161513');
+      if (typeof window.__gallopThemeCharts === 'function') window.__gallopThemeCharts();
+    });
+  }
+
   // --- How-to-use guide ---
   function setupGuide() {
     var overlay = document.getElementById('guide-overlay');
@@ -429,6 +448,7 @@
     setupMobileNav();
     setupHeaderSearch();
     setupExportImport();
+    setupThemeToggle();
     setupGuide();
 
     // First-ever visit as a guest? auto-load a sample portfolio so the dashboard

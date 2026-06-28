@@ -4,8 +4,15 @@
   var SNAPSHOTS_KEY = 'mm_portfolio_snapshots';
   var viewMode = 'networth';
 
-  var ACCENT = '#1b1a18';
-  var ACCENT_FILL = 'rgba(27,26,24,0.05)';
+  // theme-aware colors pulled from CSS variables (so charts adapt to light/dark)
+  function cssRgb(name) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v ? 'rgb(' + v + ')' : '#888';
+  }
+  function cssRgba(name, a) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v ? 'rgba(' + v.split(/\s+/).join(',') + ',' + a + ')' : 'rgba(136,136,136,' + a + ')';
+  }
 
   function loadSnapshots() {
     try { var raw = localStorage.getItem(SNAPSHOTS_KEY); if (raw) return JSON.parse(raw); } catch (e) { /* ignore */ }
@@ -112,13 +119,13 @@
       });
       var currentReturn = values[values.length - 1];
       labelText = (currentReturn >= 0 ? '+' : '') + currentReturn.toFixed(2) + '%';
-      lineColor = currentReturn >= 0 ? '#4f9d6b' : '#b6635c';
-      fillColor = currentReturn >= 0 ? 'rgba(79,157,107,0.08)' : 'rgba(182,99,92,0.08)';
+      lineColor = currentReturn >= 0 ? cssRgb('--c-status-green') : cssRgb('--c-status-red');
+      fillColor = currentReturn >= 0 ? cssRgba('--c-status-green', 0.08) : cssRgba('--c-status-red', 0.08);
     } else {
       values = series.map(function (s) { return s.value; });
       labelText = fmtMoney(values[values.length - 1]);
-      lineColor = ACCENT;
-      fillColor = ACCENT_FILL;
+      lineColor = cssRgb('--c-light-100');
+      fillColor = cssRgba('--c-light-100', 0.05);
     }
 
     if (heroVal) heroVal.textContent = labelText;
@@ -150,7 +157,7 @@
           pointRadius: values.length > 30 ? 0 : 4,
           pointHoverRadius: 6,
           pointBackgroundColor: lineColor,
-          pointHoverBackgroundColor: '#ebeae7',
+          pointHoverBackgroundColor: cssRgb('--c-dark-950'),
           borderWidth: 1.5
         }]
       },
@@ -162,14 +169,14 @@
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: '#1b1a18',
+            backgroundColor: cssRgb('--c-light-100'),
             titleFont: { size: 12, weight: '500' },
             bodyFont: { size: 13, weight: '500' },
-            titleColor: '#b0aca5',
-            bodyColor: '#f1efeb',
+            titleColor: cssRgba('--c-dark-950', 0.65),
+            bodyColor: cssRgb('--c-dark-950'),
             padding: 12,
             cornerRadius: 4,
-            borderColor: '#3a3733',
+            borderColor: cssRgba('--c-dark-950', 0.2),
             borderWidth: 1,
             callbacks: {
               label: viewMode === 'returns'
@@ -182,13 +189,13 @@
           x: {
             grid: { display: false },
             border: { display: false },
-            ticks: { color: '#8c8881', font: { size: 10, family: 'IBM Plex Mono' }, maxTicksLimit: 8 }
+            ticks: { color: cssRgb('--c-gray-dim'), font: { size: 10, family: 'IBM Plex Mono' }, maxTicksLimit: 8 }
           },
           y: {
-            grid: { color: 'rgba(0,0,0,0.06)' },
+            grid: { color: cssRgba('--c-light-100', 0.06) },
             border: { display: false },
             ticks: {
-              color: '#8c8881',
+              color: cssRgb('--c-gray-dim'),
               font: { size: 10, family: 'IBM Plex Mono' },
               callback: viewMode === 'returns'
                 ? function (v) { return v.toFixed(1) + '%'; }
@@ -240,14 +247,14 @@
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: '#1b1a18',
-              titleColor: '#b0aca5',
-              bodyColor: '#f1efeb',
+              backgroundColor: cssRgb('--c-light-100'),
+              titleColor: cssRgba('--c-dark-950', 0.65),
+              bodyColor: cssRgb('--c-dark-950'),
               titleFont: { size: 12, weight: '500' },
               bodyFont: { size: 12 },
               padding: 12,
               cornerRadius: 4,
-              borderColor: '#3a3733',
+              borderColor: cssRgba('--c-dark-950', 0.2),
               borderWidth: 1,
               callbacks: {
                 label: function (context) {
@@ -343,6 +350,13 @@
     setTimeout(renderAll, 2000);
     setTimeout(renderAll, 6000);
     setInterval(renderAll, 20000);
+
+    // Called by the theme toggle so charts rebuild with the new theme colors.
+    window.__gallopThemeCharts = function () {
+      if (overviewChart) { overviewChart.destroy(); overviewChart = null; }
+      if (allocChart) { allocChart.destroy(); allocChart = null; }
+      renderAll();
+    };
   }
 
   if (document.readyState === 'loading') {

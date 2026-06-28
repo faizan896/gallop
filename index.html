@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>gallop — investment terminal</title>
+  <!-- Apply saved theme before paint (no flash) -->
+  <script>(function(){try{var t=localStorage.getItem('mm_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
   <!-- PWA: installable app -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ebeae7">
@@ -72,6 +74,10 @@
         <input type="file" id="import-file-input" accept=".json,application/json" class="hidden">
         <button id="signin-btn" class="text-[10px] lowercase tracking-wide text-gray-dim hover:text-light-100 border border-dark-500 hover:border-light-100 px-2 py-1 rounded transition-colors">sign in</button>
         <button id="signout-btn" class="hidden text-[10px] lowercase tracking-wide text-gray-dim hover:text-status-red border border-dark-500 hover:border-status-red px-2 py-1 rounded transition-colors">sign out</button>
+        <button id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode" class="w-7 h-7 rounded-full border border-dark-500 text-gray-dim hover:text-light-100 hover:border-light-100 transition-colors flex items-center justify-center flex-shrink-0">
+          <svg class="theme-moon w-[14px] h-[14px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          <svg class="theme-sun w-[14px] h-[14px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+        </button>
         <button id="guide-btn" aria-label="How to use" title="How to use" class="w-7 h-7 rounded-full border border-dark-500 text-[12px] text-gray-dim hover:text-light-100 hover:border-light-100 transition-colors flex items-center justify-center flex-shrink-0">?</button>
         <button id="user-avatar" title="Set your name" class="w-7 h-7 rounded-full border border-dark-500 text-[10px] font-medium text-light-100 hover:border-light-100 transition-colors flex-shrink-0">IN</button>
       </div>
@@ -125,7 +131,7 @@
                 <input type="number" id="coh-input" class="w-full bg-dark-900 border border-light-100 rounded px-2 py-1 pl-6 text-sm text-light-100 outline-none">
               </div>
               <div class="flex gap-2">
-                <button id="coh-save" class="flex-1 text-[10px] lowercase bg-accent text-white py-1 rounded hover:bg-accent-dark transition-colors">save</button>
+                <button id="coh-save" class="flex-1 text-[10px] lowercase bg-accent text-dark-950 py-1 rounded hover:bg-accent-dark transition-colors">save</button>
                 <button id="coh-cancel" class="flex-1 text-[10px] lowercase bg-dark-700 border border-dark-500 text-light-100 py-1 rounded hover:bg-dark-600 transition-colors">cancel</button>
               </div>
             </div>
@@ -234,7 +240,7 @@
             </div>
             <div class="flex justify-end gap-2">
               <button class="cancel-btn text-[10px] lowercase text-gray-dim hover:text-light-100 px-3 py-1">cancel</button>
-              <button class="btn-primary text-[10px] lowercase bg-accent text-white px-4 py-1 rounded hover:bg-accent-dark transition-colors">save entry</button>
+              <button class="btn-primary text-[10px] lowercase bg-accent text-dark-950 px-4 py-1 rounded hover:bg-accent-dark transition-colors">save entry</button>
             </div>
           </div>
           <div class="space-y-1" id="crypto-list"></div>
@@ -255,7 +261,7 @@
             </div>
             <div class="flex justify-end gap-2">
               <button class="cancel-btn text-[10px] lowercase text-gray-dim hover:text-light-100 px-3 py-1">cancel</button>
-              <button class="btn-primary text-[10px] lowercase bg-accent text-white px-4 py-1 rounded hover:bg-accent-dark transition-colors">save entry</button>
+              <button class="btn-primary text-[10px] lowercase bg-accent text-dark-950 px-4 py-1 rounded hover:bg-accent-dark transition-colors">save entry</button>
             </div>
           </div>
           <div class="space-y-1" id="stock-list"></div>
@@ -302,7 +308,7 @@
             <div class="text-[12px] lowercase text-gray-dim" id="fng-label">fear &amp; greed index</div>
           </div>
           <div class="relative" style="height:6px;border-radius:999px;background:linear-gradient(90deg,#b6635c,#c2a878,#4f9d6b)">
-            <div id="fng-marker" style="position:absolute;top:50%;left:50%;width:12px;height:12px;border-radius:999px;background:#1b1a18;border:2px solid #ebeae7;transform:translate(-50%,-50%)"></div>
+            <div id="fng-marker" style="position:absolute;top:50%;left:50%;width:12px;height:12px;border-radius:999px;background:rgb(var(--c-light-100));border:2px solid rgb(var(--c-dark-950));transform:translate(-50%,-50%)"></div>
           </div>
           <div class="flex justify-between text-[10px] text-gray-darker mt-2 lowercase"><span>extreme fear</span><span>extreme greed</span></div>
         </section>
@@ -325,7 +331,7 @@
       <div class="border border-dark-500 focus-within:border-light-100 rounded p-5 transition-colors mb-4">
         <div class="flex gap-4">
           <input type="text" id="research-search-input" placeholder="enter ticker (e.g. aapl)" class="flex-1 bg-transparent text-xl lowercase tracking-wide text-light-100 placeholder-gray-darker outline-none">
-          <button id="research-search-btn" class="bg-accent text-white px-8 py-2.5 rounded text-[12px] lowercase tracking-wide hover:bg-accent-dark transition-colors">search</button>
+          <button id="research-search-btn" class="bg-accent text-dark-950 px-8 py-2.5 rounded text-[12px] lowercase tracking-wide hover:bg-accent-dark transition-colors">search</button>
         </div>
       </div>
       <div id="research-loading" class="hidden text-center py-12">
@@ -342,18 +348,18 @@
 
   <!-- How-to-use guide (auto-shows once after first login; reopen via the "?" button) -->
   <div id="guide-overlay" style="display:none;position:fixed;inset:0;z-index:150;background:rgba(20,19,21,.55);align-items:center;justify-content:center;padding:20px">
-    <div style="width:100%;max-width:440px;background:#f2f0ec;border:1px solid #d6d2cb;border-radius:6px;padding:26px 26px 22px;font-family:'IBM Plex Mono',monospace;color:#1b1a18;max-height:88vh;overflow:auto">
-      <div style="font-size:11px;letter-spacing:.04em;color:#6f6c66;text-transform:lowercase;margin-bottom:6px">how to use gallop</div>
+    <div style="width:100%;max-width:440px;background:rgb(var(--c-dark-800));border:1px solid rgb(var(--c-dark-600));border-radius:6px;padding:26px 26px 22px;font-family:'IBM Plex Mono',monospace;color:rgb(var(--c-light-100));max-height:88vh;overflow:auto">
+      <div style="font-size:11px;letter-spacing:.04em;color:rgb(var(--c-gray-muted));text-transform:lowercase;margin-bottom:6px">how to use gallop</div>
       <div style="font-size:20px;font-weight:500;margin-bottom:14px">welcome 👋</div>
-      <div style="font-size:12.5px;line-height:1.7;color:#3a3733">
+      <div style="font-size:12.5px;line-height:1.7;color:rgb(var(--c-light-200))">
         <p style="margin-bottom:10px"><b>overview</b> — your net worth, allocation, and a live market watchlist.</p>
         <p style="margin-bottom:10px"><b>portfolio</b> — add your coins &amp; stocks: tap <b>+ add</b>, type the ticker and how much you hold. Set your cash with <b>edit</b> on the overview.</p>
         <p style="margin-bottom:10px"><b>markets</b> — live prices, crypto fear &amp; greed, top movers, and news.</p>
         <p style="margin-bottom:10px"><b>research</b> — type any ticker (e.g. AAPL) to look it up.</p>
         <p style="margin-bottom:10px">Your data is private and synced to your own account — log in from any device to see it.</p>
-        <p style="margin-bottom:10px;color:#6f6c66">New here? On the overview, tap <b>“load a sample portfolio”</b> to see it filled in. Use <b>email + password</b> if Google sign-in doesn't work in the installed app.</p>
+        <p style="margin-bottom:10px;color:rgb(var(--c-gray-muted))">New here? On the overview, tap <b>“load a sample portfolio”</b> to see it filled in. Use <b>email + password</b> if Google sign-in doesn't work in the installed app.</p>
       </div>
-      <button id="guide-close" style="margin-top:8px;width:100%;background:#1b1a18;color:#ebeae7;border:none;border-radius:4px;padding:11px;font:400 12px 'IBM Plex Mono',monospace;cursor:pointer;letter-spacing:.02em">got it</button>
+      <button id="guide-close" style="margin-top:8px;width:100%;background:rgb(var(--c-accent));color:rgb(var(--c-dark-950));border:none;border-radius:4px;padding:11px;font:400 12px 'IBM Plex Mono',monospace;cursor:pointer;letter-spacing:.02em">got it</button>
     </div>
   </div>
 

@@ -84,17 +84,17 @@
     el.id = 'auth-modal';
     el.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(20,19,21,.55);display:none;align-items:center;justify-content:center;padding:22px';
     el.innerHTML = ''
-      + '<div style="width:100%;max-width:320px;background:#f2f0ec;border:1px solid #d6d2cb;border-radius:6px;padding:24px;font-family:\'IBM Plex Mono\',monospace">'
+      + '<div style="width:100%;max-width:320px;background:rgb(var(--c-dark-800));border:1px solid rgb(var(--c-dark-600));border-radius:6px;padding:24px;font-family:\'IBM Plex Mono\',monospace">'
       + '  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
-      + '    <span style="font:500 15px/1 \'IBM Plex Mono\',monospace;color:#1b1a18">gallop</span>'
-      + '    <button id="am-close" style="background:none;border:none;color:#8c8881;font-size:20px;line-height:1;cursor:pointer">×</button>'
+      + '    <span style="font:500 15px/1 \'IBM Plex Mono\',monospace;color:rgb(var(--c-light-100))">gallop</span>'
+      + '    <button id="am-close" style="background:none;border:none;color:rgb(var(--c-gray-dim));font-size:20px;line-height:1;cursor:pointer">×</button>'
       + '  </div>'
-      + '  <div style="font-size:11px;color:#6f6c66;margin-bottom:16px">sign in to save &amp; sync your portfolio across devices</div>'
-      + '  <input id="am-user" type="text" autocomplete="username" placeholder="username" style="width:100%;background:transparent;border:none;border-bottom:1px solid #cbc7bf;padding:9px 2px;margin-bottom:14px;font:400 13px \'IBM Plex Mono\',monospace;color:#1b1a18;outline:none">'
-      + '  <input id="am-pass" type="password" autocomplete="current-password" placeholder="password (6+ characters)" style="width:100%;background:transparent;border:none;border-bottom:1px solid #cbc7bf;padding:9px 2px;margin-bottom:8px;font:400 13px \'IBM Plex Mono\',monospace;color:#1b1a18;outline:none">'
-      + '  <div id="am-error" style="font-size:11px;color:#b6635c;min-height:16px;margin-bottom:10px"></div>'
-      + '  <button id="am-signin" style="width:100%;background:#1b1a18;color:#ebeae7;border:none;border-radius:4px;padding:11px;font:400 12px \'IBM Plex Mono\',monospace;cursor:pointer">sign in</button>'
-      + '  <button id="am-create" style="width:100%;background:transparent;color:#1b1a18;border:1px solid #cbc7bf;border-radius:4px;padding:11px;margin-top:10px;font:400 12px \'IBM Plex Mono\',monospace;cursor:pointer">create account</button>'
+      + '  <div style="font-size:11px;color:rgb(var(--c-gray-muted));margin-bottom:16px">sign in to save &amp; sync your portfolio across devices</div>'
+      + '  <input id="am-user" type="text" autocomplete="username" placeholder="username" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgb(var(--c-dark-500));padding:9px 2px;margin-bottom:14px;font:400 13px \'IBM Plex Mono\',monospace;color:rgb(var(--c-light-100));outline:none">'
+      + '  <input id="am-pass" type="password" autocomplete="current-password" placeholder="password (6+ characters)" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgb(var(--c-dark-500));padding:9px 2px;margin-bottom:8px;font:400 13px \'IBM Plex Mono\',monospace;color:rgb(var(--c-light-100));outline:none">'
+      + '  <div id="am-error" style="font-size:11px;color:rgb(var(--c-status-red));min-height:16px;margin-bottom:10px"></div>'
+      + '  <button id="am-signin" style="width:100%;background:rgb(var(--c-accent));color:rgb(var(--c-dark-950));border:none;border-radius:4px;padding:11px;font:400 12px \'IBM Plex Mono\',monospace;cursor:pointer">sign in</button>'
+      + '  <button id="am-create" style="width:100%;background:transparent;color:rgb(var(--c-light-100));border:1px solid rgb(var(--c-dark-500));border-radius:4px;padding:11px;margin-top:10px;font:400 12px \'IBM Plex Mono\',monospace;cursor:pointer">create account</button>'
       + '</div>';
     document.body.appendChild(el);
 
