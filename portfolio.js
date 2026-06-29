@@ -400,7 +400,17 @@
       var cs = document.getElementById('coin-search'); if (cs) cs.value = '';
       form.classList.add('hidden');
       fetchCryptoPrices();
-      (function (addedId) { setTimeout(function () { if (!cryptoPrices[addedId]) toast('couldn’t find "' + addedId + '" on coingecko — check the coin id'); }, 4000); })(id);
+      // Don't trust a single fast check — CoinGecko can be slow/rate-limited and we
+      // don't want a false "couldn't find" toast. Poll a few times before complaining.
+      (function (addedId) {
+        var tries = 0;
+        (function check() {
+          if (cryptoPrices[addedId]) return; // price arrived → it's valid, stay quiet
+          if (++tries >= 6) { toast('couldn’t find "' + addedId + '" on coingecko — check the coin id'); return; }
+          fetchCryptoPrices();
+          setTimeout(check, 2500);
+        })();
+      })(id);
     });
   }
   function setupAddStock() {
@@ -430,7 +440,15 @@
       symbolInput.value = ''; nameInput.value = ''; qtyInput.value = ''; buyInput.value = '';
       form.classList.add('hidden');
       fetchStockPrices();
-      (function (sym) { setTimeout(function () { if (!stockPrices[sym]) toast('no price for "' + sym + '" — check the ticker symbol'); }, 4000); })(symbol);
+      (function (sym) {
+        var tries = 0;
+        (function check() {
+          if (stockPrices[sym]) return;
+          if (++tries >= 6) { toast('no price for "' + sym + '" — check the ticker symbol'); return; }
+          fetchStockPrices();
+          setTimeout(check, 2500);
+        })();
+      })(symbol);
     });
   }
   function init() {

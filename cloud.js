@@ -20,6 +20,7 @@
   var FB = 'https://www.gstatic.com/firebasejs/10.12.0/';
 
   var auth = null, db = null, fbReady = null;
+  var syncPaused = false; // blocks cloud writes while we're restoring data on sign-in
 
   // ---- write hook: sync changes to cloud once signed in ----
   var rawSet = window.localStorage.setItem.bind(window.localStorage);
@@ -28,24 +29,25 @@
     rawSet(key, value);
     if (SYNC_KEYS.indexOf(key) !== -1) schedulePush();
   };
-  function schedulePush() { if (!auth || !auth.currentUser) return; clearTimeout(pushTimer); pushTimer = setTimeout(pushNow, 1200); }
+  function schedulePush() { if (syncPaused || !auth || !auth.currentUser) return; clearTimeout(pushTimer); pushTimer = setTimeout(pushNow, 1200); }
   function pushNow() {
-    if (!auth || !auth.currentUser || !db) return;
+    if (syncPaused || !auth || !auth.currentUser || !db) return;
     var u = auth.currentUser, data = { updatedAt: Date.now() };
     SYNC_KEYS.forEach(function (k) { var v = null; try { v = localStorage.getItem(k); } catch (e) {} if (v !== null) data[k] = v; });
     db.collection('users').doc(u.uid).set(data, { merge: true }).catch(function (e) { console.warn('[gallop] push failed:', e.message); });
   }
+  // Pull cloud → local. Returns: 'new' (no cloud doc yet), 'changed', or 'same'.
   function pull(u) {
     return db.collection('users').doc(u.uid).get().then(function (snap) {
-      if (!snap.exists) { pushNow(); return false; }
+      if (!snap.exists) return 'new';
       var d = snap.data(), changed = false;
       SYNC_KEYS.forEach(function (k) {
         if (d[k] === undefined) return;
         var cur = null; try { cur = localStorage.getItem(k); } catch (e) {}
         if (cur !== d[k]) { rawSet(k, d[k]); changed = true; }
       });
-      return changed;
-    }).catch(function (e) { console.warn('[gallop] pull failed:', e.message); return false; });
+      return changed ? 'changed' : 'same';
+    }).catch(function (e) { console.warn('[gallop] pull failed:', e.message); return 'same'; });
   }
 
   // ---- lazy-load Firebase SDK ----
@@ -65,7 +67,14 @@
           if (user) {
             try { localStorage.setItem('gallop_was_authed', '1'); } catch (e) {}
             closeModal();
-            pull(user).then(function (changed) { if (changed && typeof window.__gallopReload === 'function') window.__gallopReload(); });
+            // Pause cloud writes while restoring, so guest/sample data can't overwrite saved data.
+            syncPaused = true;
+            pull(user).then(function (result) {
+              syncPaused = false;
+              if (result === 'changed' && typeof window.__gallopReload === 'function') window.__gallopReload();
+              // 'new' = first sign-in for this account → seed cloud from whatever's local now.
+              if (result === 'new') pushNow();
+            });
           } else {
             try { localStorage.removeItem('gallop_was_authed'); } catch (e) {}
           }
@@ -139,7 +148,14 @@
 
   function init() {
     var sin = document.getElementById('signin-btn'); if (sin) sin.addEventListener('click', openModal);
-    var sout = document.getElementById('signout-btn'); if (sout) sout.addEventListener('click', function () { if (auth) auth.signOut(); });
+    var sout = document.getElementById('signout-btn'); if (sout) sout.addEventListener('click', function () {
+      if (!auth) return;
+      syncPaused = true; // stop any pending push
+      // Clear this account's data from the device so it isn't left behind for the next person.
+      SYNC_KEYS.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+      try { localStorage.removeItem('gallop_was_authed'); localStorage.removeItem('gallop_started'); } catch (e) {}
+      auth.signOut().catch(function () {}).then(function () { location.reload(); });
+    });
     setButtons(false);
     // Returning signed-in user? quietly restore the session in the background.
     var was = null; try { was = localStorage.getItem('gallop_was_authed'); } catch (e) {}

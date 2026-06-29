@@ -113,7 +113,10 @@
     var values, labelText, lineColor, fillColor;
 
     if (viewMode === 'returns') {
-      var baseVal = series[0].value;
+      // Base off the first non-zero snapshot — early snapshots are often $0 (before
+      // holdings loaded), which would otherwise flatten every return to 0%.
+      var baseVal = 0;
+      for (var bi = 0; bi < series.length; bi++) { if (series[bi].value > 0) { baseVal = series[bi].value; break; } }
       values = series.map(function (s) {
         return baseVal > 0 ? ((s.value - baseVal) / baseVal) * 100 : 0;
       });
