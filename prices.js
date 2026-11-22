@@ -103,15 +103,19 @@
   async function fetchSPX() {
     try {
       // S&P 500 via Pyth oracle — SPY ETF feed × 10 ≈ index. Free, no key, real-time, client-side.
-      var d = await fetchJsonRetry('https://hermes.pyth.network/v2/updates/price/latest?ids[]=' + PYTH_SPY);
-      var pr = d && d.parsed && d.parsed[0] && d.parsed[0].price;
-      if (!pr) throw new Error('no pyth data');
-      var spx = Number(pr.price) * Math.pow(10, pr.expo) * 10;
       // Pyth's latest feed has no 24h %, so take the change figure from Finnhub's SPY quote.
-      var pct = null;
-      try { var q = await fetchFinnhubQuote('SPY'); pct = q.changePct; } catch (e) { /* price still shows */ }
-      setWidget('spx', spx, pct, 2);
-    } catch (e) { console.warn('SPX (Pyth) fetch failed:', e.message); }
+      var q = null;
+      try { q = await fetchFinnhubQuote('SPY'); } catch (e) { /* price still shows */ }
+      var spx = null;
+      try {
+        var d = await fetchJsonRetry('https://hermes.pyth.network/v2/updates/price/latest?ids[]=' + PYTH_SPY, 2);
+        var pr = d && d.parsed && d.parsed[0] && d.parsed[0].price;
+        if (pr) spx = Number(pr.price) * Math.pow(10, pr.expo) * 10;
+      } catch (e) { /* Pyth unavailable — use the Finnhub SPY quote below */ }
+      if (spx == null && q) spx = q.price * 10;
+      if (spx == null || isNaN(spx)) throw new Error('no data');
+      setWidget('spx', spx, q ? q.changePct : null, 2);
+    } catch (e) { console.warn('SPX fetch failed:', e.message); }
   }
 
   // Show last-known prices instantly (before fresh data lands), so nothing is blank on load.

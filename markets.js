@@ -66,22 +66,43 @@
     list.innerHTML = html;
   }
 
+  async function fetchBinanceCoins() {
+    var arr = await getJson('https://api.binance.com/api/v3/ticker/24hr');
+    var coins = [];
+    for (var i = 0; i < arr.length; i++) {
+      var s = arr[i].symbol;
+      if (s.slice(-4) !== 'USDT') continue;
+      var base = s.slice(0, -4);
+      if (/(UP|DOWN|BULL|BEAR)$/.test(base)) continue; // leveraged tokens
+      if (STABLE[base]) continue;
+      var vol = parseFloat(arr[i].quoteVolume), chg = parseFloat(arr[i].priceChangePercent), price = parseFloat(arr[i].lastPrice);
+      if (!isFinite(vol) || !isFinite(chg) || !isFinite(price)) continue;
+      coins.push({ base: base, price: price, chg: chg, vol: vol });
+    }
+    return coins;
+  }
+
+  // Binance is geo-blocked in some countries (e.g. the US) — same data from CoinGecko.
+  async function fetchCoinGeckoCoins() {
+    var arr = await getJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h');
+    var coins = [];
+    for (var i = 0; i < arr.length; i++) {
+      var base = String(arr[i].symbol || '').toUpperCase();
+      if (!base || STABLE[base] || /USD/.test(base)) continue;
+      var vol = arr[i].total_volume, chg = arr[i].price_change_percentage_24h, price = arr[i].current_price;
+      if (!isFinite(vol) || !isFinite(chg) || !isFinite(price) || vol == null || chg == null || price == null) continue;
+      coins.push({ base: base, price: price, chg: chg, vol: vol });
+    }
+    return coins;
+  }
+
   async function loadMovers() {
     var list = document.getElementById('movers-list');
     if (!list) return;
     try {
-      var arr = await getJson('https://api.binance.com/api/v3/ticker/24hr');
-      var coins = [];
-      for (var i = 0; i < arr.length; i++) {
-        var s = arr[i].symbol;
-        if (s.slice(-4) !== 'USDT') continue;
-        var base = s.slice(0, -4);
-        if (/(UP|DOWN|BULL|BEAR)$/.test(base)) continue; // leveraged tokens
-        if (STABLE[base]) continue;
-        var vol = parseFloat(arr[i].quoteVolume), chg = parseFloat(arr[i].priceChangePercent), price = parseFloat(arr[i].lastPrice);
-        if (!isFinite(vol) || !isFinite(chg) || !isFinite(price)) continue;
-        coins.push({ base: base, price: price, chg: chg, vol: vol });
-      }
+      var coins;
+      try { coins = await fetchBinanceCoins(); } catch (e) { coins = await fetchCoinGeckoCoins(); }
+      if (!coins.length) throw new Error('no movers');
       coins.sort(function (a, b) { return b.vol - a.vol; });   // most-traded first
       var liquid = coins.slice(0, 60);                          // only liquid coins (no random micro-caps)
       liquid.sort(function (a, b) { return b.chg - a.chg; });

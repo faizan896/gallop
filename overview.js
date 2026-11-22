@@ -51,6 +51,9 @@
   }
 
   function recordSnapshot() {
+    // Re-read first: a cloud pull writes new history straight to localStorage,
+    // and saving the copy held in memory would overwrite it.
+    snapshots = loadSnapshots();
     var nw = getCurrentNetWorth();
     var today = new Date().toISOString().slice(0, 10);
     if (snapshots.length > 0 && snapshots[snapshots.length - 1].date === today) {
@@ -261,6 +264,7 @@
               borderWidth: 1,
               callbacks: {
                 label: function (context) {
+                  var total = context.dataset.data.reduce(function (a, b) { return a + b; }, 0);
                   var pct = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
                   return ' $' + Math.round(context.parsed).toLocaleString('en-US') + ' (' + pct + '%)';
                 }
